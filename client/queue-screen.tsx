@@ -1,13 +1,14 @@
 import type { PluginScreenProps } from "@getpaseo/plugin/client";
-import { useRpc } from "@getpaseo/plugin/client";
-import { useMutation } from "@tanstack/react-query";
+import { useRpc, useSettings } from "@getpaseo/plugin/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { openReviewRpc, type PullRequest } from "../shared/reviews";
+import { settingsDefinition } from "../shared/settings";
 import { filterByLabels, labelsOf, useLabelFilter } from "./labelFilter";
 import { PullRequestRow } from "./pull-request-row";
 import { timeAgo } from "./time";
-import { useReviews } from "./useReviews";
+import { REVIEWS_QUERY_KEY, useReviews } from "./useReviews";
 import { openExternal } from "./web";
 
 export function QueueScreen({ theme, layout, navigation }: PluginScreenProps) {
@@ -21,6 +22,16 @@ export function QueueScreen({ theme, layout, navigation }: PluginScreenProps) {
   const styles = useMemo(() => createStyles(theme.colors, layout.compact), [theme, layout.compact]);
   const data = reviews.data;
   const [selectedLabels, toggleLabel] = useLabelFilter();
+  // "Hide drafts" is the stored setting: the server then leaves drafts out of the search, so the badge follows too.
+  const settings = useSettings(settingsDefinition);
+  const queryClient = useQueryClient();
+  const hideDrafts = settings.status === "ready" && settings.values.hideDrafts;
+  const toggleDrafts = async () => {
+    if (settings.status !== "ready") return;
+    const saved = await settings.save({ ...settings.values, hideDrafts: !settings.values.hideDrafts }, settings.revision);
+    if (saved) void queryClient.invalidateQueries({ queryKey: REVIEWS_QUERY_KEY });
+  };
+  const drafts = data?.pullRequests.filter((pullRequest) => pullRequest.isDraft).length ?? 0;
   const labels = labelsOf(data?.pullRequests ?? []);
   const shown = filterByLabels(data?.pullRequests ?? [], selectedLabels);
   const listed = data?.pullRequests.length ?? 0;
@@ -46,8 +57,11 @@ export function QueueScreen({ theme, layout, navigation }: PluginScreenProps) {
           <Text style={styles.errorText}>{(reviews.error ?? open.error)?.message}</Text>
         </View>
       )}
-      {labels.length > 0 && (
+      {data && (
         <View style={styles.labels}>
+          <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: hideDrafts }} disabled={settings.status !== "ready" || settings.saving} onPress={() => void toggleDrafts()}>
+            <Text style={[styles.label, hideDrafts && styles.labelActive]}>{hideDrafts ? "Drafts hidden" : `Hide drafts${drafts > 0 ? ` ${drafts}` : ""}`}</Text>
+          </Pressable>
           {labels.map((label) => {
             const active = selectedLabels.has(label.name);
             return (
