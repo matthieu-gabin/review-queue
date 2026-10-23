@@ -1,13 +1,16 @@
 import type { PluginSidebarItemProps } from "@getpaseo/plugin/client";
 import { SidebarRow } from "@getpaseo/plugin/client/ui";
 import { Text, View } from "react-native";
+import { filterByLabels, useLabelFilter } from "./labelFilter";
 import { useReviews } from "./useReviews";
 
 export const SCREEN_ID = "queue";
 
 export function SidebarItem({ currentScreen, openScreen, theme }: PluginSidebarItemProps) {
   const reviews = useReviews();
-  const total = reviews.data?.total ?? 0;
+  const [selectedLabels] = useLabelFilter();
+  // With a label filter on, the badge counts what the screen shows; without one, GitHub's full count.
+  const total = selectedLabels.size > 0 ? filterByLabels(reviews.data?.pullRequests ?? [], selectedLabels).length : (reviews.data?.total ?? 0);
   const badge = reviews.error ? "!" : total > 0 ? String(total) : null;
   return (
     <SidebarRow

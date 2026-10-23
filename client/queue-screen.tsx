@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 import { openReviewRpc, type PullRequest } from "../shared/reviews";
+import { filterByLabels, labelsOf, useLabelFilter } from "./labelFilter";
 import { PullRequestRow } from "./pull-request-row";
 import { timeAgo } from "./time";
 import { useReviews } from "./useReviews";
@@ -19,13 +20,16 @@ export function QueueScreen({ theme, layout, navigation }: PluginScreenProps) {
   });
   const styles = useMemo(() => createStyles(theme.colors, layout.compact), [theme, layout.compact]);
   const data = reviews.data;
+  const [selectedLabels, toggleLabel] = useLabelFilter();
+  const labels = labelsOf(data?.pullRequests ?? []);
+  const shown = filterByLabels(data?.pullRequests ?? [], selectedLabels);
   const listed = data?.pullRequests.length ?? 0;
   const notListed = data ? data.total - listed : 0;
 
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Text style={styles.heading}>Reviews to do{data ? ` · ${data.total}` : ""}</Text>
+        <Text style={styles.heading}>Reviews to do{data ? ` · ${selectedLabels.size > 0 ? `${shown.length} of ${data.total}` : data.total}` : ""}</Text>
         {data && (
           <Pressable accessibilityRole="link" onPress={() => openExternal(`https://github.com/${data.repo}/pulls?q=${encodeURIComponent(SEARCH_ON_GITHUB)}`)}>
             <Text style={styles.subtle}>{data.repo}</Text>
@@ -42,10 +46,25 @@ export function QueueScreen({ theme, layout, navigation }: PluginScreenProps) {
           <Text style={styles.errorText}>{(reviews.error ?? open.error)?.message}</Text>
         </View>
       )}
+      {labels.length > 0 && (
+        <View style={styles.labels}>
+          {labels.map((label) => {
+            const active = selectedLabels.has(label.name);
+            return (
+              <Pressable key={label.name} accessibilityRole="checkbox" accessibilityState={{ checked: active }} onPress={() => toggleLabel(label.name)}>
+                <Text style={[styles.label, { borderColor: `#${label.color}` }, active && styles.labelActive]}>
+                  {label.name} {label.count}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
       {!data && !reviews.error && <Text style={[styles.subtle, styles.message]}>Asking GitHub…</Text>}
       {data && listed === 0 && <Text style={[styles.subtle, styles.message]}>Nothing waits for your review. ✓</Text>}
+      {data && listed > 0 && shown.length === 0 && <Text style={[styles.subtle, styles.message]}>No pull request carries the selected labels.</Text>}
       <FlatList
-        data={data?.pullRequests ?? []}
+        data={shown}
         keyExtractor={keyOf}
         renderItem={({ item }) => (
           <PullRequestRow pullRequest={item} theme={theme} onOpen={open.isPending ? null : open.mutate} opening={open.isPending && open.variables?.number === item.number} />
@@ -76,6 +95,9 @@ function createStyles(colors: PluginScreenProps["theme"]["colors"], compact: boo
       borderBottomColor: colors.border,
     },
     heading: { color: colors.foreground, fontSize: 16, fontWeight: "700" as const },
+    labels: { flexDirection: "row" as const, flexWrap: "wrap" as const, gap: 6, paddingHorizontal: compact ? 12 : 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
+    label: { fontSize: 12, color: colors.foregroundMuted, borderWidth: 1, borderRadius: 12, paddingHorizontal: 9, paddingVertical: 2 },
+    labelActive: { color: colors.accentForeground, backgroundColor: colors.accent, borderColor: colors.accent },
     spacer: { flex: 1 },
     subtle: { color: colors.foregroundMuted, fontSize: 12 },
     message: { padding: 16 },
