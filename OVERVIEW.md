@@ -1,0 +1,5 @@
+Review queue lists the open pull requests of one GitHub repository that are waiting for your review: the ones GitHub shows under "review requested" for you, including requests sent to a team you belong to.
+
+A sidebar entry carries the count. Its screen lists each pull request with its author, branch, size, checks state, labels and age, and tags the drafts, the conflicts and the ones already approved or sent back for changes. A click checks the pull request out into a worktree of a separate review clone (its path is a setting; Paseo registers it as a project on first use), starts a Claude review agent there and opens the workspace; with the pr-review plugin installed, its Review panel then shows the proposed comments on the diff. A GitHub link on each row opens the pull request in the browser. The list refreshes every two minutes and on Refresh.
+
+Setup: the GitHub CLI (`gh`) must be installed and signed in (`gh auth status`). The repository is set in the plugin's settings, as `owner/name`; drafts can be hidden there too. The plugin reads GitHub through `gh api graphql` only and writes nothing.

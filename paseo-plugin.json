@@ -1,0 +1,8 @@
+{
+  "id": "review-queue",
+  "name": "Review queue",
+  "description": "The open pull requests waiting for your review in one GitHub repository, in the sidebar with a count",
+  "requirements": {
+    "paseo": ">=0.12.0"
+  }
+}
