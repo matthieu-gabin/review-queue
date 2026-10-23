@@ -10,6 +10,9 @@ const pullRequestSchema = z.object({
   url: z.string(),
   author: z.string(),
   branch: z.string(),
+  baseBranch: z.string(),
+  /** Set when the pull request is a layer of a stack: its base is another branch than the default one, or another open pull request builds on it. */
+  stack: z.object({ position: z.number(), size: z.number() }).nullable(),
   isDraft: z.boolean(),
   hasConflicts: z.boolean(),
   /** GitHub's own verdict: null when nobody reviewed yet, else the latest decision. */

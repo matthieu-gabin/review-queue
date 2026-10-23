@@ -46,6 +46,7 @@ export function PullRequestRow({ pullRequest, theme, onOpen, opening }: Props) {
         <Text style={styles.meta}>·</Text>
         <Text style={[styles.meta, styles.branch]} numberOfLines={1}>
           {pullRequest.branch}
+          {pullRequest.stack ? ` → ${pullRequest.baseBranch}` : ""}
         </Text>
         <Text style={styles.meta}>·</Text>
         <Text style={[styles.meta, { color: theme.colors.statusSuccess }]}>+{pullRequest.additions}</Text>
@@ -84,6 +85,7 @@ function checksColor(checks: PullRequest["checks"], colors: PluginTheme["colors"
 
 function pullRequestTags(pullRequest: PullRequest, colors: PluginTheme["colors"]): { text: string; color: string }[] {
   const tags: { text: string; color: string }[] = [];
+  if (pullRequest.stack) tags.push({ text: `Stack ${pullRequest.stack.position}/${pullRequest.stack.size}`, color: colors.accent });
   if (pullRequest.isDraft) tags.push({ text: "Draft", color: colors.foregroundMuted });
   if (pullRequest.hasConflicts) tags.push({ text: "Conflicts", color: colors.statusDanger });
   if (pullRequest.reviewDecision === "CHANGES_REQUESTED") tags.push({ text: "Changes requested", color: colors.statusWarning });

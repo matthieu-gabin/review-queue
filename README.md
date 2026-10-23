@@ -4,6 +4,7 @@ The open pull requests waiting for your review in one GitHub repository, as a si
 
 - Sidebar entry **Reviews to do** with the number of pull requests; the screen is also in the command center
 - Each row: number, title, author, branch, +/− lines, files, checks (✓ ✗ ●), labels, age; tags for Draft, Conflicts, Approved, Changes requested
+- Stacked pull requests get a **Stack n/m** tag and show their base branch after the head branch (`feature-b → feature-a`). The stack is read from the base branches of every open pull request of the repository: a layer's base is the layer under it, position 1 is the bottom, m is the longest chain through that layer
 - Click a row to review it: the pull request is checked out into a Paseo worktree of the **review checkout** (Settings → Review queue, default `~/Documents/repository/paseos-roger/roger-platform-review`), a clone kept apart from the one you develop in; Paseo registers it as a project on first use. A worktree already on that pull request is reused, a Claude agent starts there with `/pr-review <number>`, and the workspace opens. The **pr-review** plugin (`../pr-review`) ships that skill and opens its Review panel on that workspace; without it the agent has no `/pr-review` to run
 - **GitHub ↗** on a row opens the pull request in the browser; click the repository name to open the same search on GitHub
 - Label chips under the header filter the list: select one or more (for example `java`) to keep only the pull requests carrying any of them; the sidebar count follows. The choice lasts until Paseo restarts
